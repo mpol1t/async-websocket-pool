@@ -1,0 +1,4 @@
+[run]
+omit = tests/*
+cov = async_websocket_pool/
+cov-report = xml
