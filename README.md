@@ -13,7 +13,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Installation
 You can install the Async WebSocket Pool using pip:
 ```
-pip install async-websocket-client-pool
+pip install async-websocket-pool
 ```
 
 Please note that this project requires Python 3.7 or later.
