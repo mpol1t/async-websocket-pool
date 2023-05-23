@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async-websocket-pool"
-version = "0.1.3"
+version = "0.1.4"
 description = "async-websocket-pool is a Python library that enables efficient creation and management of a pool of asynchronous WebSocket clients."
 authors = ["mpol1t"]
 license = "MIT"
