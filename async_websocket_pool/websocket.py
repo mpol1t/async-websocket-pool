@@ -4,6 +4,7 @@ import sys
 from typing import Any, Optional, Callable, List
 
 import websockets
+from websockets import WebSocketClientProtocol
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -12,7 +13,8 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 async def connect(
         url: str,
-        message_handler: Callable[[Any], None],
+        on_message: Callable[[Any], None],
+        on_connect: Optional[Callable[[WebSocketClientProtocol], None]],
         timeout: Optional[int | float] = None,
         **kwargs
 ) -> None:
@@ -33,8 +35,9 @@ async def connect(
     propagated up the call stack.
 
     :param url: The WebSocket URL to establish the connection.
-    :param message_handler: A callback function to handle incoming messages. This function should
+    :param on_message: A callback function to handle incoming messages. This function should
                             accept a single argument which will be the received message.
+    :param on_connect: A callback function that is executed every time successful connection is established.
     :param timeout: Optional; The maximum wait time for a message, in seconds. If set to None,
                     the function will wait indefinitely for a message.
     :param kwargs: Optional; Additional keyword arguments for the websockets.connect function to
@@ -48,10 +51,13 @@ async def connect(
         try:
             logger.info(f'Connected to {url}')
 
+            if on_connect:
+                on_connect(websocket)
+
             while True:
                 try:
                     message: Any = await asyncio.wait_for(websocket.recv(), timeout=timeout)
-                    message_handler(message)
+                    on_message(message)
                 except asyncio.TimeoutError:
                     logger.warning(f'Timeout detected for {url}')
                     break
