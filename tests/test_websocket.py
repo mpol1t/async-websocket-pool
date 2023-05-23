@@ -11,7 +11,7 @@ from async_websocket_pool.websocket import run_pool
 @pytest.mark.asyncio
 async def test_connect():
     with patch('websockets.connect') as mock:
-        await connect('test_url', message_handler=None)
+        await connect('test_url', on_message=None, on_connect=None)
 
     mock.assert_called_with('test_url')
 
@@ -24,13 +24,13 @@ async def test_receive():
         yield mock_websocket
 
     with patch('websockets.connect', new=mock_connect):
-        await connect('test_url', message_handler=None, timeout=1)
+        await connect('test_url', on_message=None, on_connect=None, timeout=1)
 
     mock_websocket.recv.assert_called()
 
 
 @pytest.mark.asyncio
-async def test_handler_called_with_message():
+async def test_on_message_called_with_message():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
     mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
@@ -40,9 +40,26 @@ async def test_handler_called_with_message():
         yield mock_websocket
 
     with patch('websockets.connect', new=mock_connect):
-        await connect('test_url', message_handler=mock_handler, timeout=1)
+        await connect('test_url', on_message=mock_handler, on_connect=None, timeout=1)
 
     mock_handler.assert_called_with(mock_message)
+
+
+@pytest.mark.asyncio
+async def test_on_connect_called():
+    mock_message = 'mock_message'
+    mock_websocket = AsyncMock()
+    mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
+    mock_on_message = Mock()
+    mock_on_connect = Mock()
+
+    async def mock_connect(*args, **kwargs):
+        yield mock_websocket
+
+    with patch('websockets.connect', new=mock_connect):
+        await connect('test_url', on_message=mock_on_message, on_connect=mock_on_connect, timeout=1)
+
+    mock_on_connect.assert_called()
 
 
 @pytest.mark.asyncio
@@ -54,7 +71,7 @@ async def test_timeout(caplog):
         yield mock_websocket
 
     with patch('websockets.connect', new=mock_connect):
-        await connect('test_url', message_handler=lambda x: x, timeout=5)
+        await connect('test_url', on_message=lambda x: x, on_connect=None, timeout=5)
 
     assert "Timeout detected for test_url" in caplog.text
 
@@ -68,7 +85,7 @@ async def test_connection_closed(caplog):
         yield mock_websocket
 
     with patch('websockets.connect', new=mock_connect):
-        await connect('test_url', message_handler=lambda x: x)
+        await connect('test_url', on_message=lambda x: x, on_connect=None)
 
     assert "Disconnected from test_url" in caplog.text
 
@@ -88,7 +105,7 @@ async def test_reconnect_after_disconnect(caplog):
         yield mock_websocket3
 
     with patch('websockets.connect', new=mock_connect):
-        await connect('test_url', message_handler=lambda x: x, timeout=5)
+        await connect('test_url', on_message=lambda x: x, on_connect=None, timeout=5)
 
     assert caplog.text.count("Disconnected from test_url") == 3
 
