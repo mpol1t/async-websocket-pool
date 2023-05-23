@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+from asyncio import Semaphore, Future
 from typing import Any, Optional, Callable, List
 
 import websockets
@@ -16,6 +17,7 @@ async def connect(
         on_message: Callable[[Any], None],
         on_connect: Optional[Callable[[WebSocketClientProtocol], None]],
         timeout: Optional[int | float] = None,
+        max_concurrent_tasks: int = 10,
         **kwargs
 ) -> None:
     """
@@ -47,17 +49,23 @@ async def connect(
     :raises: This function propagates all exceptions except for asyncio.TimeoutError and
              websockets.ConnectionClosed, which are handled internally.
     """
+    async def handle_message(msg: Any):
+        async with semaphore:
+            await on_message(msg)
+
+    semaphore: Semaphore = Semaphore(max_concurrent_tasks)
+
     async for websocket in websockets.connect(url, **kwargs):
         try:
             logger.info(f'Connected to {url}')
 
             if on_connect:
-                on_connect(websocket)
+                await on_connect(websocket)
 
             while True:
                 try:
                     message: Any = await asyncio.wait_for(websocket.recv(), timeout=timeout)
-                    on_message(message)
+                    asyncio.create_task(handle_message(message))
                 except asyncio.TimeoutError:
                     logger.warning(f'Timeout detected for {url}')
                     break
@@ -67,7 +75,7 @@ async def connect(
             logger.exception(e)
 
 
-async def run_pool(funcs: List[Callable]) -> None:
+async def run_pool(funcs: List[Callable]) -> Future:
     """
     Concurrently executes a list of asynchronous functions utilizing the asyncio.gather method.
 

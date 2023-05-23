@@ -21,11 +21,14 @@ Please note that this project requires Python 3.7 or later.
 ## Usage
 
 ```python
-from async_websocket_client_pool import connect, run_pool
+from async_websocket_pool import connect, run_pool
+
+async def on_message(message):
+    print(message)
 
 tasks = [
-  lambda: connect('ws://example1.com', lambda x: print(x), 5),
-  lambda: connect('ws://example2.com', lambda x: print(x), 5),
+  lambda: connect('ws://example1.com', on_message=on_message, timeout=5),
+  lambda: connect('ws://example2.com', on_message=on_message, timeout=5),
 ]
 
 await run_pool(tasks)
