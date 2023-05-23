@@ -1,5 +1,5 @@
 import asyncio
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import patch, AsyncMock
 
 import pytest
 import websockets
@@ -19,6 +19,7 @@ async def test_connect():
 @pytest.mark.asyncio
 async def test_receive():
     mock_websocket = AsyncMock()
+    mock_websocket.recv.side_effect = [None, asyncio.TimeoutError()]
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
@@ -34,7 +35,7 @@ async def test_on_message_called_with_message():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
     mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
-    mock_handler = Mock()
+    mock_handler = AsyncMock()
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
@@ -50,8 +51,8 @@ async def test_on_connect_called():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
     mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
-    mock_on_message = Mock()
-    mock_on_connect = Mock()
+    mock_on_message = AsyncMock()
+    mock_on_connect = AsyncMock()
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
@@ -88,6 +89,20 @@ async def test_connection_closed(caplog):
         await connect('test_url', on_message=lambda x: x, on_connect=None)
 
     assert "Disconnected from test_url" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_outer_exception(caplog):
+    mock_websocket = AsyncMock()
+    mock_websocket.recv.side_effect = Exception('Generic exception thrown.')
+
+    async def mock_connect(*args, **kwargs):
+        yield mock_websocket
+
+    with patch('websockets.connect', new=mock_connect):
+        await connect('test_url', on_message=lambda x: x, on_connect=None)
+
+    assert 'Generic exception thrown.' in caplog.text
 
 
 @pytest.mark.asyncio
