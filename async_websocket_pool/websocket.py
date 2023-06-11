@@ -1,15 +1,10 @@
 import asyncio
 import logging
-import sys
 from asyncio import Semaphore, Future
 from typing import Any, Optional, Callable, List
 
 import websockets
 from websockets import WebSocketClientProtocol
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 async def connect(
@@ -42,6 +37,7 @@ async def connect(
     :param on_connect: A callback function that is executed every time successful connection is established.
     :param timeout: Optional; The maximum wait time for a message, in seconds. If set to None,
                     the function will wait indefinitely for a message.
+    :param max_concurrent_tasks: Optional; The maximum number of concurrent tasks to execute.
     :param kwargs: Optional; Additional keyword arguments for the websockets.connect function to
                    further customize the WebSocket connection.
     :return: None
@@ -49,6 +45,7 @@ async def connect(
     :raises: This function propagates all exceptions except for asyncio.TimeoutError and
              websockets.ConnectionClosed, which are handled internally.
     """
+
     async def handle_message(msg: Any):
         async with semaphore:
             await on_message(msg)
@@ -57,7 +54,7 @@ async def connect(
 
     async for websocket in websockets.connect(url, **kwargs):
         try:
-            logger.info(f'Connected to {url}')
+            logging.info(f'Connected to {url}')
 
             if on_connect:
                 await on_connect(websocket)
@@ -67,12 +64,12 @@ async def connect(
                     message: Any = await asyncio.wait_for(websocket.recv(), timeout=timeout)
                     asyncio.create_task(handle_message(message))
                 except asyncio.TimeoutError:
-                    logger.warning(f'Timeout detected for {url}')
+                    logging.warning(f'Timeout detected for {url}')
                     break
         except websockets.ConnectionClosed:
-            logger.warning(f'Disconnected from {url}')
+            logging.warning(f'Disconnected from {url}')
         except Exception as e:
-            logger.exception(e)
+            logging.exception(e)
 
 
 async def run_pool(funcs: List[Callable]) -> Future:
