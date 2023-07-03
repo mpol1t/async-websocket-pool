@@ -4,14 +4,14 @@
 
 # Async WebSocket Pool
 
-This repository contains a Python-based Async WebSocket Pool that allows for asynchronous connections to multiple WebSocket endpoints.
+This repository contains a Python-based asynchronous WebSocket pool that allows for asynchronous connections to multiple WebSocket endpoints.
 
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine.
 
 ### Installation
-You can install the Async WebSocket Pool using pip:
+You can install the `async-websocket-pool` using pip:
 ```
 pip install async-websocket-pool
 ```
