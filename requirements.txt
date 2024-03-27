@@ -4,5 +4,5 @@ packaging==24.0
 pluggy==1.0.0
 pytest==7.3.1
 pytest-asyncio==0.21.0
-pytest-cov==4.0.0
+pytest-cov==5.0.0
 websockets==11.0.3
