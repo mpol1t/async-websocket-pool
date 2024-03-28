@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async-websocket-pool"
-version = "0.1.6"
+version = "0.1.7"
 description = "async-websocket-pool is a Python library that enables efficient creation and management of a pool of asynchronous WebSocket clients."
 authors = ["mpol1t"]
 license = "MIT"
@@ -10,11 +10,15 @@ packages = [{include = "async_websocket_pool"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 websockets = ">=11.0.3,<13.0.0"
+iniconfig = "2.0.0"
+packaging = "24.0"
+pluggy = "1.4.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=7.3.1,<9.0.0"
+pytest = ">=8.1.1,<9.0.0"
 pytest-asyncio = ">=0.21,<0.24"
-coverage = "^7.2.5"
+coverage = "^7.4.4"
+pytest-cov = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core"]
