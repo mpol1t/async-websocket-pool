@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "async-websocket-pool"
-version = "0.1.10"
+version = "0.2.0"
 description = "async-websocket-pool is a Python library that enables efficient creation and management of a pool of asynchronous WebSocket clients."
 authors = ["mpol1t"]
 license = "MIT"
@@ -8,23 +8,16 @@ readme = "README.md"
 packages = [{ include = "async_websocket_pool" }]
 
 [tool.poetry.dependencies]
-# Keep CI compatibility (your CI used Python 3.10)
 python = ">=3.10,<4.0"
 websockets = "^15.0.1"
 
 [tool.poetry.group.dev.dependencies]
-# Test stack (matches pytest-asyncio constraint)
 pytest = "^8.4"
 pytest-asyncio = "^1.2.0"
 pytest-cov = "^7"
 coverage = "^7"
-
-# Tools used by Makefile + pre-commit
 ruff = "^0.6.9"
 mypy = "^1.11"
-
-# If you run mypy on types for 3rd-party libs, add stub pkgs here as needed:
-# types-requests = "*"
 
 [build-system]
 requires = ["poetry-core"]
