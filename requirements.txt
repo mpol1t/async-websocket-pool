@@ -1,4 +1,4 @@
 iniconfig==2.3.0
 packaging==25.0
 pluggy==1.6.0
-websockets==13.0.1
+websockets==15.0.1
