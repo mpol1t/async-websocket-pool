@@ -1,18 +1,17 @@
 import asyncio
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import websockets
+from websockets.exceptions import ConnectionClosedOK
+from websockets.frames import Close, CloseCode
 
-from async_websocket_pool.websocket import connect
-from async_websocket_pool.websocket import run_pool
+from async_websocket_pool.websocket import connect, run_pool
 
 
 @pytest.mark.asyncio
 async def test_connect():
     with patch('websockets.connect') as mock:
         await connect('test_url', on_message=None, on_connect=None)
-
     mock.assert_called_with('test_url')
 
 
@@ -58,7 +57,12 @@ async def test_on_connect_called():
         yield mock_websocket
 
     with patch('websockets.connect', new=mock_connect):
-        await connect('test_url', on_message=mock_on_message, on_connect=mock_on_connect, timeout=1)
+        await connect(
+            'test_url',
+            on_message=mock_on_message,
+            on_connect=mock_on_connect,
+            timeout=1,
+        )
 
     mock_on_connect.assert_called()
 
@@ -80,7 +84,9 @@ async def test_timeout(caplog):
 @pytest.mark.asyncio
 async def test_connection_closed(caplog):
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = websockets.ConnectionClosed(1000, 'connection closed')
+    # Build proper close frames for websockets 15.x: supply rcvd, sent, and rcvd_then_sent
+    close = Close(CloseCode.NORMAL_CLOSURE, "connection closed")
+    mock_websocket.recv.side_effect = ConnectionClosedOK(close, close, True)
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
@@ -107,12 +113,14 @@ async def test_outer_exception(caplog):
 
 @pytest.mark.asyncio
 async def test_reconnect_after_disconnect(caplog):
+    # Three sequential connections that immediately close.
+    close = Close(CloseCode.NORMAL_CLOSURE, "connection closed")
     mock_websocket1 = AsyncMock()
-    mock_websocket1.recv.side_effect = websockets.ConnectionClosed(1000, 'connection closed')
+    mock_websocket1.recv.side_effect = ConnectionClosedOK(close, close, True)
     mock_websocket2 = AsyncMock()
-    mock_websocket2.recv.side_effect = websockets.ConnectionClosed(1000, 'connection closed')
+    mock_websocket2.recv.side_effect = ConnectionClosedOK(close, close, True)
     mock_websocket3 = AsyncMock()
-    mock_websocket3.recv.side_effect = websockets.ConnectionClosed(1000, 'connection closed')
+    mock_websocket3.recv.side_effect = ConnectionClosedOK(close, close, True)
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket1
@@ -131,13 +139,8 @@ async def test_run_pool():
     mock_func1 = AsyncMock()
     mock_func2 = AsyncMock()
     mock_func3 = AsyncMock()
-
     funcs = [mock_func1, mock_func2, mock_func3]
-
-    # Run the mock functions in a pool
     await run_pool(funcs)
-
-    # Check that each mock function was called
     mock_func1.assert_called_once()
     mock_func2.assert_called_once()
     mock_func3.assert_called_once()
