@@ -1,10 +1,8 @@
 [![codecov](https://codecov.io/gh/mpol1t/async-websocket-pool/branch/main/graph/badge.svg?token=IXD2CSFA1N)](https://codecov.io/gh/mpol1t/async-websocket-pool)
 ![GitHub](https://img.shields.io/github/license/mpol1t/async-websocket-pool)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/gemini-public-api)
-[![Python package](https://github.com/mpol1t/async-websocket-pool/actions/workflows/python-pypi.yml/badge.svg?branch=main)](https://github.com/mpol1t/async-websocket-pool/actions/workflows/python-pypi.yml)
-[![CI](https://github.com/mpol1t/async-websocket-pool/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/mpol1t/async-websocket-pool/actions/workflows/python-app.yml)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/async-websocket-pool)
 [![CodeQL](https://github.com/mpol1t/async-websocket-pool/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/mpol1t/async-websocket-pool/actions/workflows/github-code-scanning/codeql)
-
+![PyPI - Version](https://img.shields.io/pypi/v/async-websocket-pool)
 # Async WebSocket Pool
 
 This repository contains a Python-based asynchronous WebSocket pool that allows for asynchronous connections to multiple WebSocket endpoints.
