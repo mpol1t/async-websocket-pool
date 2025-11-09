@@ -1,0 +1,74 @@
+default_language_version:
+  python: python3
+
+# Keep noise low; adjust as you like
+exclude: |
+  (?x)^(
+    build/|
+    dist/|
+    \.venv/|
+    venv/|
+    .*\.egg-info/|
+    \.mypy_cache/|
+    \.ruff_cache/|
+    \.pytest_cache/|
+    coverage\.xml|
+    poetry\.lock
+  )$
+
+repos:
+  # ------------- Core hygiene -------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-ast
+      - id: forbid-new-submodules
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+
+  # ------------- Ruff (lint + format) -------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # ------------- Spelling -------------
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        exclude: |
+          (?x)^(
+            CHANGELOG\.md
+          )$
+
+  # ------------- mypy via Poetry env -------------
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (poetry)
+        language: system
+        entry: bash -c 'poetry run mypy'
+        types: [python]
+        pass_filenames: false
+
+  # ------------- Optional Poetry checks -------------
+  - repo: https://github.com/python-poetry/poetry
+    rev: 2.2.1
+    hooks:
+      - id: poetry-check
+      # - id: poetry-lock
+      # - id: poetry-export
+
+# ------------- CI defaults (pre-commit.ci) -------------
+ci:
+  autofix_prs: true
+  autoupdate_schedule: monthly
+  skip: []
