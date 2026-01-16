@@ -9,7 +9,7 @@ packages = [{ include = "async_websocket_pool" }]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-websockets = "^15.0.1"
+websockets = ">=15.0.1,<17.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.4,<10.0"
