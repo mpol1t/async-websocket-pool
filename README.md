@@ -64,7 +64,7 @@ Library users are expected to write cancellation-friendly handlers.
 
 ## Documentation
 
-For more information, start with the examples in `examples/` and the release notes in
+For more information, review the API usage in this README and the release notes in
 `CHANGELOG.md`.
 
 ## Contribution
