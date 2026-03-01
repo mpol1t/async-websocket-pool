@@ -15,6 +15,8 @@ async def connect(
     on_connect: Optional[Callable[[ClientConnection], Awaitable[None] | None]],
     timeout: Optional[int | float] = None,
     max_concurrent_tasks: int = 10,
+    handler_drain_timeout: float | None = 5.0,
+    handler_cancel_grace: float = 1.0,
     **kwargs: Any,
 ) -> None:
     """
@@ -51,12 +53,24 @@ async def connect(
         on_message: Callback invoked for each received message. May be sync or async.
         on_connect: Callback invoked after a connection is established. May be sync or async.
         timeout: Optional seconds to wait for a message before reconnecting. If None, wait
-        indefinitely. max_concurrent_tasks: Maximum number of message handler tasks running
-        at once. **kwargs: Additional keyword arguments forwarded to `websockets.connect`.
+        indefinitely.
+        max_concurrent_tasks: Maximum number of message handler tasks running at once.
+        handler_drain_timeout: Maximum seconds to wait for in-flight handlers to finish
+        before cancelling them during reconnect. None waits indefinitely.
+        handler_cancel_grace: Maximum seconds to wait for cancelled handlers to exit before
+        proceeding with reconnect.
+        **kwargs: Additional keyword arguments forwarded to `websockets.connect`.
 
     Returns:
         None
     """
+
+    if max_concurrent_tasks < 1:
+        raise ValueError("max_concurrent_tasks must be >= 1")
+    if handler_drain_timeout is not None and handler_drain_timeout < 0:
+        raise ValueError("handler_drain_timeout must be >= 0 or None")
+    if handler_cancel_grace < 0:
+        raise ValueError("handler_cancel_grace must be >= 0")
 
     semaphore: Semaphore = Semaphore(max_concurrent_tasks)
 
@@ -72,11 +86,54 @@ async def connect(
             logging.exception("Exception in handler")
 
     async def _handle_message(msg: Any) -> None:
-        async with semaphore:
+        try:
             await _run_handler(on_message, msg)
+        finally:
+            semaphore.release()
+
+    async def _drain_pending(
+        pending: set[asyncio.Task[Any]],
+        connection_url: str,
+    ) -> None:
+        if not pending:
+            return
+
+        done, still_pending = await asyncio.wait(
+            pending,
+            timeout=handler_drain_timeout,
+        )
+
+        if still_pending:
+            timeout_label = (
+                "inf" if handler_drain_timeout is None else f"{handler_drain_timeout:.2f}"
+            )
+
+            logging.warning(
+                "Timed out draining %d handler task(s) after %ss; cancelling",
+                len(still_pending),
+                timeout_label,
+            )
+
+            for task in still_pending:
+                task.cancel()
+
+            _, stubborn = await asyncio.wait(still_pending, timeout=handler_cancel_grace)
+
+            if stubborn:
+                logging.warning(
+                    (
+                        "Proceeding with reconnect for %s; %d handler task(s) "
+                        "ignored cancellation after %.2fs"
+                    ),
+                    connection_url,
+                    len(stubborn),
+                    handler_cancel_grace,
+                )
 
     # Top-level websockets.connect is compatible with v15 and remains patchable in tests.
     async for websocket in websockets.connect(url, **kwargs):
+        pending: set[asyncio.Task[Any]] = set()
+
         try:
             logging.info(f"Connected to {url}")
 
@@ -87,8 +144,13 @@ async def connect(
             while True:
                 try:
                     message: Any = await asyncio.wait_for(websocket.recv(), timeout=timeout)
-                    # Process messages concurrently (bounded by semaphore).
-                    asyncio.create_task(_handle_message(message))
+
+                    # Apply backpressure: wait for an available slot before spawning a task.
+                    await semaphore.acquire()
+
+                    task = asyncio.create_task(_handle_message(message))
+                    pending.add(task)
+                    task.add_done_callback(pending.discard)
                 except asyncio.TimeoutError:
                     logging.warning(f"Timeout detected for {url}")
                     # Break to trigger reconnection via the async-for.
@@ -99,6 +161,8 @@ async def connect(
         except Exception:
             # Log unexpected exceptions and proceed to the next reconnect attempt.
             logging.exception("Unexpected exception in websocket loop")
+        finally:
+            await _drain_pending(pending, url)
 
 
 async def run_pool(funcs: List[Callable[[], Awaitable[None]]]) -> None:
