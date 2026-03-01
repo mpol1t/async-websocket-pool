@@ -1,16 +1,61 @@
 name: PyPI
-permissions:
-  contents: read
 on:
   push:
     tags:
       - "v*.*.*"
+
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build distributions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Build and publish to pypi
-        uses: JRubics/poetry-publish@v2.0
+      - uses: actions/checkout@v6
         with:
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          python -m pip install --upgrade pip
+          pipx install poetry
+          pip install twine
+
+      - name: Build distributions
+        run: |
+          poetry build
+
+      - name: Check distributions
+        run: |
+          python -m twine check dist/*
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v5
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/async-websocket-pool
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
