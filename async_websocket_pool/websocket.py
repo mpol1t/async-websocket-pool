@@ -2,7 +2,8 @@ import asyncio
 import inspect
 import logging
 from asyncio import Semaphore
-from typing import Any, Awaitable, Callable, List, Optional
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import websockets
 from websockets.asyncio.client import ClientConnection
@@ -11,9 +12,9 @@ from websockets.exceptions import ConnectionClosed
 
 async def connect(
     url: str,
-    on_message: Optional[Callable[[Any], Awaitable[None] | None]],
-    on_connect: Optional[Callable[[ClientConnection], Awaitable[None] | None]],
-    timeout: Optional[int | float] = None,
+    on_message: Callable[[Any], Awaitable[None] | None] | None,
+    on_connect: Callable[[ClientConnection], Awaitable[None] | None] | None,
+    timeout: int | float | None = None,
     max_concurrent_tasks: int = 10,
     handler_drain_timeout: float | None = 5.0,
     handler_cancel_grace: float = 1.0,
@@ -74,7 +75,7 @@ async def connect(
 
     semaphore: Semaphore = Semaphore(max_concurrent_tasks)
 
-    async def _run_handler(handler: Optional[Callable[..., Any]], *args: Any) -> None:
+    async def _run_handler(handler: Callable[..., Any] | None, *args: Any) -> None:
         """Run a sync or async handler safely without crashing the recv loop."""
         if handler is None:
             return
@@ -151,7 +152,7 @@ async def connect(
                     task = asyncio.create_task(_handle_message(message))
                     pending.add(task)
                     task.add_done_callback(pending.discard)
-                except asyncio.TimeoutError:
+                except (TimeoutError, asyncio.TimeoutError):  # noqa: UP041
                     logging.warning(f"Timeout detected for {url}")
                     # Break to trigger reconnection via the async-for.
                     break
@@ -165,7 +166,7 @@ async def connect(
             await _drain_pending(pending, url)
 
 
-async def run_pool(funcs: List[Callable[[], Awaitable[None]]]) -> None:
+async def run_pool(funcs: list[Callable[[], Awaitable[None]]]) -> None:
     """
     Concurrently execute a list of asynchronous, parameterless callables using asyncio.gather.
 

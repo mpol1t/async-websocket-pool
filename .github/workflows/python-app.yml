@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -47,15 +49,19 @@ jobs:
           extra_args: --all-files
 
   tests:
-    name: tests (pytest + coverage)
+    name: tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
         run: |
@@ -78,9 +84,15 @@ jobs:
 
       - name: Run tests
         run: |
-          poetry run pytest --cov async_websocket_pool/ --cov-report xml
+          poetry run pytest -q
+
+      - name: Generate coverage report
+        if: matrix.python-version == '3.11'
+        run: |
+          poetry run pytest --cov async_websocket_pool/ --cov-report xml --cov-fail-under=95
 
       - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

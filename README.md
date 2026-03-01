@@ -64,11 +64,13 @@ Library users are expected to write cancellation-friendly handlers.
 
 ## Documentation
 
-For more information, please refer to the full documentation.
+For more information, review the API usage in this README and the release notes in
+`CHANGELOG.md`.
 
 ## Contribution
 
-Contributions are always welcome! Please read our contributing guide to learn about our development process, how to propose bugfixes and improvements, and how to build and test your changes.
+Contributions are always welcome. Please read `CONTRIBUTING.md` for the development
+workflow and `SECURITY.md` for vulnerability reporting.
 
 ## Authors
 

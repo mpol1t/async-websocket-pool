@@ -1,15 +1,22 @@
-[tool.poetry]
+[project]
 name = "async-websocket-pool"
-version = "0.2.0"
+version = "0.3.0"
 description = "async-websocket-pool is a Python library that enables efficient creation and management of a pool of asynchronous WebSocket clients."
-authors = ["mpol1t"]
-license = "MIT"
 readme = "README.md"
-packages = [{ include = "async_websocket_pool" }]
+requires-python = ">=3.10,<4.0"
+license = "MIT"
+authors = [{ name = "mpol1t" }]
+dependencies = [
+    "websockets>=15.0.1,<17.0.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-websockets = ">=15.0.1,<17.0.0"
+[project.urls]
+Homepage = "https://github.com/mpol1t/async-websocket-pool"
+Repository = "https://github.com/mpol1t/async-websocket-pool"
+Issues = "https://github.com/mpol1t/async-websocket-pool/issues"
+
+[tool.poetry]
+packages = [{ include = "async_websocket_pool" }]
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.4,<10.0"
@@ -31,7 +38,7 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
+select = ["B", "E", "F", "I", "UP", "W"]
 
 [tool.ruff.format]
 quote-style = "preserve"
@@ -46,6 +53,14 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 no_implicit_optional = true
 check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true
+strict_equality = true
 ignore_missing_imports = false
 
 files = ["async_websocket_pool"]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true

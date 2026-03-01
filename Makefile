@@ -40,7 +40,7 @@ test: ## Run tests with pytest
 
 .PHONY: coverage
 coverage: ## Run tests with coverage (terminal + XML)
-	$(PY) pytest --cov=$(PKG) --cov-report=term-missing --cov-report=xml
+	$(PY) pytest --cov=$(PKG) --cov-report=term-missing --cov-report=xml --cov-fail-under=95
 
 .PHONY: check
 check: ## CI-friendly: format check + lint + type + tests

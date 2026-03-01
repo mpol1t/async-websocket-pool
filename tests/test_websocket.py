@@ -5,7 +5,14 @@ import pytest
 from websockets.exceptions import ConnectionClosedOK
 from websockets.frames import Close, CloseCode
 
+from async_websocket_pool import connect as package_connect
+from async_websocket_pool import run_pool as package_run_pool
 from async_websocket_pool.websocket import connect, run_pool
+
+
+def test_package_root_exports_documented_api():
+    assert package_connect is connect
+    assert package_run_pool is run_pool
 
 
 @pytest.mark.asyncio
@@ -18,7 +25,7 @@ async def test_connect():
 @pytest.mark.asyncio
 async def test_receive():
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [None, asyncio.TimeoutError()]
+    mock_websocket.recv.side_effect = [None, TimeoutError()]
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
@@ -33,7 +40,7 @@ async def test_receive():
 async def test_on_message_called_with_message():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
+    mock_websocket.recv.side_effect = [mock_message, TimeoutError()]
     mock_handler = AsyncMock()
 
     async def mock_connect(*args, **kwargs):
@@ -49,7 +56,7 @@ async def test_on_message_called_with_message():
 async def test_on_connect_called():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
+    mock_websocket.recv.side_effect = [mock_message, TimeoutError()]
     mock_on_message = AsyncMock()
     mock_on_connect = AsyncMock()
 
@@ -70,7 +77,7 @@ async def test_on_connect_called():
 @pytest.mark.asyncio
 async def test_timeout(caplog):
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [None, asyncio.TimeoutError]
+    mock_websocket.recv.side_effect = [None, TimeoutError()]
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
@@ -169,9 +176,9 @@ async def test_reconnect_waits_for_handler_drain():
             assert handler_completed.is_set()
 
     mock_websocket1 = AsyncMock()
-    mock_websocket1.recv.side_effect = ['first', asyncio.TimeoutError()]
+    mock_websocket1.recv.side_effect = ['first', TimeoutError()]
     mock_websocket2 = AsyncMock()
-    mock_websocket2.recv.side_effect = [asyncio.TimeoutError()]
+    mock_websocket2.recv.side_effect = [TimeoutError()]
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket1
@@ -209,9 +216,9 @@ async def test_reconnect_cancels_stuck_handler_after_drain_timeout(caplog):
         on_connect_calls += 1
 
     mock_websocket1 = AsyncMock()
-    mock_websocket1.recv.side_effect = ['first', asyncio.TimeoutError()]
+    mock_websocket1.recv.side_effect = ['first', TimeoutError()]
     mock_websocket2 = AsyncMock()
-    mock_websocket2.recv.side_effect = [asyncio.TimeoutError()]
+    mock_websocket2.recv.side_effect = [TimeoutError()]
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket1
