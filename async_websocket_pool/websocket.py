@@ -58,6 +58,9 @@ async def connect(
         None
     """
 
+    if max_concurrent_tasks < 1:
+        raise ValueError("max_concurrent_tasks must be >= 1")
+
     semaphore: Semaphore = Semaphore(max_concurrent_tasks)
 
     async def _run_handler(handler: Optional[Callable[..., Any]], *args: Any) -> None:
@@ -72,8 +75,10 @@ async def connect(
             logging.exception("Exception in handler")
 
     async def _handle_message(msg: Any) -> None:
-        async with semaphore:
+        try:
             await _run_handler(on_message, msg)
+        finally:
+            semaphore.release()
 
     # Top-level websockets.connect is compatible with v15 and remains patchable in tests.
     async for websocket in websockets.connect(url, **kwargs):
@@ -87,7 +92,8 @@ async def connect(
             while True:
                 try:
                     message: Any = await asyncio.wait_for(websocket.recv(), timeout=timeout)
-                    # Process messages concurrently (bounded by semaphore).
+                    # Apply backpressure: wait for an available slot before spawning a task.
+                    await semaphore.acquire()
                     asyncio.create_task(_handle_message(message))
                 except asyncio.TimeoutError:
                     logging.warning(f"Timeout detected for {url}")

@@ -134,6 +134,12 @@ async def test_reconnect_after_disconnect(caplog):
 
 
 @pytest.mark.asyncio
+async def test_invalid_max_concurrent_tasks():
+    with pytest.raises(ValueError):
+        await connect('test_url', on_message=None, on_connect=None, max_concurrent_tasks=0)
+
+
+@pytest.mark.asyncio
 async def test_run_pool():
     # Create mock async functions
     mock_func1 = AsyncMock()
