@@ -17,7 +17,7 @@ You can install the `async-websocket-pool` using pip:
 pip install async-websocket-pool
 ```
 
-Please note that this project requires Python 3.7 or later.
+Please note that this project requires Python 3.10 or later.
 
 ## Usage
 
@@ -28,13 +28,35 @@ async def on_message(message):
     print(message)
 
 tasks = [
-  lambda: connect('ws://example1.com', on_message=on_message, timeout=5),
-  lambda: connect('ws://example2.com', on_message=on_message, timeout=5),
+  lambda: connect(
+      'ws://example1.com',
+      on_message=on_message,
+      timeout=5,
+      handler_drain_timeout=2.0,
+      handler_cancel_grace=0.5,
+  ),
+  lambda: connect(
+      'ws://example2.com',
+      on_message=on_message,
+      timeout=5,
+      handler_drain_timeout=2.0,
+      handler_cancel_grace=0.5,
+  ),
 ]
 
 await run_pool(tasks)
 
 ```
+
+### Reconnect and handler shutdown
+
+`connect()` processes messages concurrently up to `max_concurrent_tasks`. When a connection
+times out or disconnects, the library waits for in-flight `on_message` handlers to finish for
+up to `handler_drain_timeout` seconds. Any handlers still running after that are cancelled, and
+the client waits up to `handler_cancel_grace` more seconds before reconnecting.
+
+This keeps reconnect latency bounded while still giving well-behaved handlers time to finish.
+Library users are expected to write cancellation-friendly handlers.
 
 ## Built With
 
