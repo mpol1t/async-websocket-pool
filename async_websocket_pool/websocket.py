@@ -152,7 +152,7 @@ async def connect(
                     task = asyncio.create_task(_handle_message(message))
                     pending.add(task)
                     task.add_done_callback(pending.discard)
-                except TimeoutError:
+                except (TimeoutError, asyncio.TimeoutError):  # noqa: UP041
                     logging.warning(f"Timeout detected for {url}")
                     # Break to trigger reconnection via the async-for.
                     break

@@ -40,7 +40,7 @@ async def test_receive():
 async def test_on_message_called_with_message():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
+    mock_websocket.recv.side_effect = [mock_message, TimeoutError()]
     mock_handler = AsyncMock()
 
     async def mock_connect(*args, **kwargs):
@@ -56,7 +56,7 @@ async def test_on_message_called_with_message():
 async def test_on_connect_called():
     mock_message = 'mock_message'
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [mock_message, asyncio.TimeoutError]
+    mock_websocket.recv.side_effect = [mock_message, TimeoutError()]
     mock_on_message = AsyncMock()
     mock_on_connect = AsyncMock()
 
@@ -77,7 +77,7 @@ async def test_on_connect_called():
 @pytest.mark.asyncio
 async def test_timeout(caplog):
     mock_websocket = AsyncMock()
-    mock_websocket.recv.side_effect = [None, asyncio.TimeoutError]
+    mock_websocket.recv.side_effect = [None, TimeoutError()]
 
     async def mock_connect(*args, **kwargs):
         yield mock_websocket
