@@ -82,6 +82,8 @@ async def connect(
 
     # Top-level websockets.connect is compatible with v15 and remains patchable in tests.
     async for websocket in websockets.connect(url, **kwargs):
+        pending: set[asyncio.Task[Any]] = set()
+
         try:
             logging.info(f"Connected to {url}")
 
@@ -94,7 +96,9 @@ async def connect(
                     message: Any = await asyncio.wait_for(websocket.recv(), timeout=timeout)
                     # Apply backpressure: wait for an available slot before spawning a task.
                     await semaphore.acquire()
-                    asyncio.create_task(_handle_message(message))
+                    task = asyncio.create_task(_handle_message(message))
+                    pending.add(task)
+                    task.add_done_callback(pending.discard)
                 except asyncio.TimeoutError:
                     logging.warning(f"Timeout detected for {url}")
                     # Break to trigger reconnection via the async-for.
@@ -105,6 +109,10 @@ async def connect(
         except Exception:
             # Log unexpected exceptions and proceed to the next reconnect attempt.
             logging.exception("Unexpected exception in websocket loop")
+        finally:
+            if pending:
+                # Ensure in-flight handlers complete before reconnecting.
+                await asyncio.gather(*pending, return_exceptions=True)
 
 
 async def run_pool(funcs: List[Callable[[], Awaitable[None]]]) -> None:
