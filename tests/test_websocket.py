@@ -140,6 +140,99 @@ async def test_invalid_max_concurrent_tasks():
 
 
 @pytest.mark.asyncio
+async def test_invalid_handler_drain_timeout():
+    with pytest.raises(ValueError):
+        await connect('test_url', on_message=None, on_connect=None, handler_drain_timeout=-1)
+
+
+@pytest.mark.asyncio
+async def test_invalid_handler_cancel_grace():
+    with pytest.raises(ValueError):
+        await connect('test_url', on_message=None, on_connect=None, handler_cancel_grace=-1)
+
+
+@pytest.mark.asyncio
+async def test_reconnect_waits_for_handler_drain():
+    handler_started = asyncio.Event()
+    handler_completed = asyncio.Event()
+    on_connect_calls = 0
+
+    async def on_message(_message):
+        handler_started.set()
+        await asyncio.sleep(0.05)
+        handler_completed.set()
+
+    async def on_connect(_websocket):
+        nonlocal on_connect_calls
+        on_connect_calls += 1
+        if on_connect_calls == 2:
+            assert handler_completed.is_set()
+
+    mock_websocket1 = AsyncMock()
+    mock_websocket1.recv.side_effect = ['first', asyncio.TimeoutError()]
+    mock_websocket2 = AsyncMock()
+    mock_websocket2.recv.side_effect = [asyncio.TimeoutError()]
+
+    async def mock_connect(*args, **kwargs):
+        yield mock_websocket1
+        yield mock_websocket2
+
+    with patch('websockets.connect', new=mock_connect):
+        await connect(
+            'test_url',
+            on_message=on_message,
+            on_connect=on_connect,
+            timeout=0.01,
+            handler_drain_timeout=0.2,
+            handler_cancel_grace=0.05,
+        )
+
+    assert handler_started.is_set()
+    assert handler_completed.is_set()
+    assert on_connect_calls == 2
+
+
+@pytest.mark.asyncio
+async def test_reconnect_cancels_stuck_handler_after_drain_timeout(caplog):
+    handler_cancelled = asyncio.Event()
+    on_connect_calls = 0
+
+    async def on_message(_message):
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError:
+            handler_cancelled.set()
+            raise
+
+    async def on_connect(_websocket):
+        nonlocal on_connect_calls
+        on_connect_calls += 1
+
+    mock_websocket1 = AsyncMock()
+    mock_websocket1.recv.side_effect = ['first', asyncio.TimeoutError()]
+    mock_websocket2 = AsyncMock()
+    mock_websocket2.recv.side_effect = [asyncio.TimeoutError()]
+
+    async def mock_connect(*args, **kwargs):
+        yield mock_websocket1
+        yield mock_websocket2
+
+    with patch('websockets.connect', new=mock_connect):
+        await connect(
+            'test_url',
+            on_message=on_message,
+            on_connect=on_connect,
+            timeout=0.01,
+            handler_drain_timeout=0.01,
+            handler_cancel_grace=0.05,
+        )
+
+    assert handler_cancelled.is_set()
+    assert on_connect_calls == 2
+    assert "Timed out draining 1 handler task(s)" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_run_pool():
     # Create mock async functions
     mock_func1 = AsyncMock()
