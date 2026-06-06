@@ -2,15 +2,17 @@
 
 ## Reporting a Vulnerability
 
-Please do not open a public issue for a suspected security vulnerability.
+Please report security issues privately to @mpol1t.
 
-Report it privately through GitHub Security Advisories if available for the repository, or
-contact the maintainer directly with:
+Do not open a public issue for an unpatched vulnerability.
 
-- A clear description of the issue.
-- Steps to reproduce it.
-- The affected versions and environment details.
-- Any suggested mitigation or fix, if known.
+Include:
 
-The maintainer will review the report, confirm impact, and coordinate a fix and disclosure
-timeline.
+- affected repository and version
+- steps to reproduce
+- impact assessment
+- any suggested remediation
+
+## Support Expectations
+
+This repository is maintained on a best-effort basis. Security fixes are prioritized over feature work, but response times may vary.

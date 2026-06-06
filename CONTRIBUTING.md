@@ -1,27 +1,21 @@
 # Contributing
 
-## Development Setup
+## Workflow
 
-1. Install Poetry.
-2. Run `poetry install`.
-3. Run `poetry run pre-commit install` if you want local hooks.
+1. Open a branch for your change.
+2. Make the change in focused commits.
+3. Run the local validation commands.
+4. Open a pull request against the default branch.
 
-## Common Commands
+## Validation
 
-- `poetry run pytest -q`
-- `poetry run ruff check .`
-- `poetry run ruff format .`
-- `poetry run mypy async_websocket_pool`
-- `make check`
+- `python -m pip install --upgrade pip`
+- `pipx install poetry`
+- `poetry install --no-interaction --no-root`
+- `poetry run pre-commit run --all-files`
 
-## Pull Requests
+## Review Expectations
 
-- Keep changes focused.
-- Add or update tests for behavior changes.
-- Update `README.md` or `CHANGELOG.md` when the user-facing behavior changes.
-- Make sure local checks pass before opening a pull request.
-
-## Release Notes
-
-- Add notable user-facing changes to `CHANGELOG.md`.
-- Keep entries short and release-oriented.
+- keep pull requests focused
+- respond to review comments with follow-up commits or explicit reasoning
+- prefer rebasing over merge commits
