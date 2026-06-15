@@ -19,7 +19,7 @@ Issues = "https://github.com/mpol1t/async-websocket-pool/issues"
 packages = [{ include = "async_websocket_pool" }]
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=8.4,<10.0"
+pytest = ">=9.1.0,<10.0"
 pytest-asyncio = "^1.4.0"
 pytest-cov = "^7"
 coverage = "^7"
