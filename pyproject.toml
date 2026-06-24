@@ -23,7 +23,7 @@ pytest = ">=9.1.1,<10.0"
 pytest-asyncio = "^1.4.0"
 pytest-cov = "^7"
 coverage = "^7"
-ruff = ">=0.15.18,<0.16.0"
+ruff = ">=0.15.19,<0.16.0"
 mypy = "^2.1"
 
 [build-system]
