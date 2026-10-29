@@ -20,7 +20,7 @@ packages = [{ include = "async_websocket_pool" }]
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=9.1.1,<10.0"
-pytest-asyncio = "^1.4.0"
+pytest-asyncio = "^1.4.1"
 pytest-cov = "^7"
 coverage = "^7"
 ruff = ">=0.17.2,<0.18.0"
